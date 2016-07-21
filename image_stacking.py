@@ -1,8 +1,3 @@
-import os
-import cv2
-import numpy as np
-from time import time
-
 """
 
 The MIT License (MIT)
@@ -24,6 +19,12 @@ OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 """
+
+import os
+import cv2
+import numpy as np
+from time import time
+
 
 # Read all files in directory
 image_folder = "images/"

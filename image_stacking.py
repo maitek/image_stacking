@@ -28,6 +28,7 @@ from time import time
 
 
 # Align and stack images with ECC method
+# Slower but more accurate
 def stackImagesECC(file_list):
     M = np.eye(3, 3, dtype=np.float32)
 
@@ -54,8 +55,8 @@ def stackImagesECC(file_list):
     return stacked_image
 
 
-
 # Align and stack images by matching ORB keypoints
+# Faster but less accurate
 def stackImagesKeypointMatching(file_list):
 
     orb = cv2.ORB_create()

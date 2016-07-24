@@ -26,84 +26,99 @@ import numpy as np
 from time import time
 
 
+
+# Align and stack images with ECC method
+def stackImagesECC(file_list):
+    M = np.eye(3, 3, dtype=np.float32)
+
+    first_image = None
+    stacked_image = None
+
+    for file in file_list:
+        image = cv2.imread(file,1).astype(np.float32) / 255
+        print(file)
+        if first_image is None:
+            # convert to gray scale floating point image
+            first_image = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+            stacked_image = image
+        else:
+            # Estimate perspective transform
+            s, M = cv2.findTransformECC(cv2.cvtColor(image,cv2.COLOR_BGR2GRAY), first_image, M, cv2.MOTION_HOMOGRAPHY)
+            w, h, _ = image.shape
+            # Align image to first image
+            image = cv2.warpPerspective(image, M, (h, w))
+            stacked_image += image
+    
+    stacked_image /= len(file_list)
+    stacked_image = (stacked_image*255).astype(np.uint8)
+    return stacked_image
+
+
+
+# Align and stack images by matching ORB keypoints
+def stackImagesKeypointMatching(file_list):
+
+    orb = cv2.ORB_create()
+
+    # disable OpenCL to because of bug in ORB in OpenCV 3.1
+    cv2.ocl.setUseOpenCL(False)
+
+    stacked_image = None
+    first_image = None
+    first_kp = None
+    first_des = None
+    for file in file_list:
+        print(file)
+        image = cv2.imread(file,1)
+        imageF = image.astype(np.float32) / 255
+
+        # compute the descriptors with ORB
+        kp = orb.detect(image, None)
+        kp, des = orb.compute(image, kp)
+
+        # create BFMatcher object
+        matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+
+        if first_image is None:
+            # Save keypoints for first image
+            stacked_image = imageF
+            first_image = image
+            first_kp = kp
+            first_des = des
+        else:
+             # Find matches and sort them in the order of their distance
+            matches = matcher.match(first_des, des)
+            matches = sorted(matches, key=lambda x: x.distance)
+
+            src_pts = np.float32(
+                [first_kp[m.queryIdx].pt for m in matches]).reshape(-1, 1, 2)
+            dst_pts = np.float32(
+                [kp[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2)
+             
+            # Estimate perspective transformation
+            M, mask = cv2.findHomography(dst_pts, src_pts, cv2.RANSAC, 5.0)
+            w, h, _ = imageF.shape
+            imageF = cv2.warpPerspective(imageF, M, (h, w))
+            stacked_image += imageF
+
+    stacked_image /= len(file_list)
+    stacked_image = (stacked_image*255).astype(np.uint8)
+    return stacked_image
+
+# ===== MAIN =====
 # Read all files in directory
-image_folder = "images/"
+image_folder = "images2/"
 file_list = os.listdir(image_folder)
 file_list = [os.path.join(image_folder, x)
              for x in file_list if x.endswith(".jpg")]
 
-fast = cv2.FastFeatureDetector_create()
-orb = cv2.ORB_create()
+# Stack images using ECC method
+stacked_image = stackImagesECC(file_list)
+cv2.imshow("Stacked image ECC method", stacked_image)
 
-show_debug = False
+#Stack images using ORB keypoint method
+stacked_image = stackImagesKeypointMatching(file_list)
+cv2.imshow("Stacked image ORB keypoint method", stacked_image)
 
-# disable OpenCL to fix buggy ORB in OpenCV 3.1
-cv2.ocl.setUseOpenCL(False)
-
-avg_image = None
-first_kp = None
-first_des = None
-# find keypoints and descriptors in each image
-tic = time()
-for file in file_list:
-    image = cv2.imread(file, 1)
-    imageF = image.astype(np.float32) / 255
-
-    # compute the descriptors with ORB
-    kp = orb.detect(image, None)
-    kp, des = orb.compute(image, kp)
-
-    # create BFMatcher object
-    matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
-
-    if avg_image is None:
-        # Save keypoints for first image
-        avg_image = imageF
-        first_image = image
-        first_kp = kp
-        first_des = des
-    else:
-        # Find matches and sort them in the order of their distance
-        matches = matcher.match(first_des, des)
-        matches = sorted(matches, key=lambda x: x.distance)
-
-        src_pts = np.float32(
-            [first_kp[m.queryIdx].pt for m in matches]).reshape(-1, 1, 2)
-        dst_pts = np.float32(
-            [kp[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2)
-        
-        
-        
-        # Estimate perspective transformation
-        #M, mask = cv2.findHomography(dst_pts, src_pts, cv2.RANSAC, 5.0)
-        
-        M = np.eye(3, 3, dtype=np.float32)
-        s, M = cv2.findTransformECC(cv2.cvtColor(image,cv2.COLOR_BGR2GRAY),cv2.cvtColor(first_image,cv2.COLOR_BGR2GRAY), M, cv2.MOTION_HOMOGRAPHY)
-        print(M)
-        # Compensate image for movements
-        w, h, _ = imageF.shape
-
-        corrected_image = cv2.warpPerspective(imageF, M, (h, w))
-        #corrected_image = cv2.warpAffine(imageF, M, (h, w))
-
-        avg_image += corrected_image
-
-        if show_debug:
-            # draw matches for debugging
-            image_matches = image.copy()
-            image_matches = cv2.drawMatches(
-                first_image, first_kp, image, kp, matches, image_matches, flags=2)
-            #cv2.imshow("corrected", corrected_image)
-            cv2.imshow("image_matches", image_matches)
-            cv2.waitKey(0)
-
-    # image = cv2.drawKeypoints(image, kp, image, color=(255, 0, 0))
-
-avg_image /= len(file_list)
-
-print("Stacking " + str(len(file_list)) +
-      " images in " + str(time() - tic) + " seconds")
-cv2.imshow("Stacked image", avg_image)
 cv2.waitKey(0)
-cv2.imwrite("match .jpg", image_matches)
-cv2.imwrite("result.jpg", (avg_image * 255).astype(np.uint8))
+

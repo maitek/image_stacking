@@ -116,8 +116,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('input_dir', help='Input directory of images ()')
     parser.add_argument('output_image', help='Output image name')
-    parser.add_argument('--method', help='Stacking method ORB (faster) or ECC (more acccurate)')
-    parser.add_argument('--show', help='Stacking method ORB (faster) or ECC (more acccurate)')
+    parser.add_argument('--method', help='Stacking method ORB (faster) or ECC (more precise)')
+    parser.add_argument('--show', help='Show result image',action='store_true')
     args = parser.parse_args()
 
     image_folder = args.input_dir
@@ -158,6 +158,6 @@ if __name__ == '__main__':
     cv2.imwrite(str(args.output_image),stacked_image)
 
     # Show image
-    if args.show is not None:
+    if args.show:
         cv2.imshow(description, stacked_image)
         cv2.waitKey(0)

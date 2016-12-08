@@ -10,22 +10,23 @@ The perspective transform can be estimated either using [ORB Keypoint matching](
 
 ![alt text](https://github.com/maitek/image_stacking/blob/master/match.jpg "Match keypoints")
 
+## Requirements
+- Python 2 or 3
+- OpenCV 3.0
 
-## Example Usage
+## Example Usage:
+### ORB method (faster)
 
-ORB method (faster):
 ```
   python image_stacking.py images/ result.jpg --method ORB
 ```
 ![alt text](https://github.com/maitek/image_stacking/blob/master/result_orb.jpg "ORB result image")
 
 
-ECC method (more precise):
+## ECC method (more precise):
 ```
   python image_stacking.py images/ result.jpg --method ECC
 ```
 ![alt text](https://github.com/maitek/image_stacking/blob/master/result_ECC.jpg "ECC result image")
 
-## Requirements
-- Python 2 or 3
-- OpenCV 3.0
+

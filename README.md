@@ -8,9 +8,9 @@ which is usually not possible when taking images without a tripod.
 This python script shows an example of stack multiple images together by first automatically alligning and then calculating
 a the fused images as a pixel-wise mean of the alligned images. 
 
-In order to allign the images the perspective transforms between the first images and every other images is estimated. 
-The perspective transform can be estimated either using ORB Keypoint matching (faster) or
-Enhanced Correlation Coefficient Maximization (more precise).
+In order to allign the images the perspective transforms between the first images and every other images are estimated. 
+The perspective transform can be estimated either using [ORB Keypoint matching](http://docs.opencv.org/3.0-beta/doc/py_tutorials/py_feature2d/py_orb/py_orb.html) (faster) or
+[ECC maximization](http://docs.opencv.org/3.0-beta/modules/video/doc/motion_analysis_and_object_tracking.html#findtransformecc) (more precise).
 
 ## Requirements
 - Python 2 or 3
@@ -18,6 +18,11 @@ Enhanced Correlation Coefficient Maximization (more precise).
 
 ## Example Usage
 
+ORB method (faster)
+```
+  python image_stacking.py image_folder/ result.jpg --method ORB
+```
+ECC method (more precise)
 ```
   python image_stacking.py image_folder/ result.jpg --method ECC
 ```

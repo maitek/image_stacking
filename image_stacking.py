@@ -49,7 +49,7 @@ def stackImagesECC(file_list):
             # Align image to first image
             image = cv2.warpPerspective(image, M, (h, w))
             stacked_image += image
-    
+
     stacked_image /= len(file_list)
     stacked_image = (stacked_image*255).astype(np.uint8)
     return stacked_image
@@ -95,7 +95,7 @@ def stackImagesKeypointMatching(file_list):
                 [first_kp[m.queryIdx].pt for m in matches]).reshape(-1, 1, 2)
             dst_pts = np.float32(
                 [kp[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2)
-             
+
             # Estimate perspective transformation
             M, mask = cv2.findHomography(dst_pts, src_pts, cv2.RANSAC, 5.0)
             w, h, _ = imageF.shape
@@ -108,18 +108,56 @@ def stackImagesKeypointMatching(file_list):
 
 # ===== MAIN =====
 # Read all files in directory
-image_folder = "images2/"
-file_list = os.listdir(image_folder)
-file_list = [os.path.join(image_folder, x)
-             for x in file_list if x.endswith(".jpg")]
+import argparse
 
-# Stack images using ECC method
-stacked_image = stackImagesECC(file_list)
-cv2.imshow("Stacked image ECC method", stacked_image)
 
-#Stack images using ORB keypoint method
-stacked_image = stackImagesKeypointMatching(file_list)
-cv2.imshow("Stacked image ORB keypoint method", stacked_image)
+if __name__ == '__main__':
 
-cv2.waitKey(0)
+    parser = argparse.ArgumentParser(description='')
+    parser.add_argument('input_dir', help='Input directory of images ()')
+    parser.add_argument('output_image', help='Output image name')
+    parser.add_argument('--method', help='Stacking method ORB (faster) or ECC (more acccurate)')
+    parser.add_argument('--show', help='Stacking method ORB (faster) or ECC (more acccurate)')
+    args = parser.parse_args()
 
+    image_folder = args.input_dir
+    if not os.path.exists(image_folder):
+        print("ERROR {} not found!".format(image_folder))
+        exit()
+
+    file_list = os.listdir(image_folder)
+    file_list = [os.path.join(image_folder, x)
+                 for x in file_list if x.endswith(('.jpg', '.png','.bmp'))]
+
+    if args.method is not None:
+        method = str(args.method)
+    else:
+        method = 'KP'
+
+    tic = time()
+
+    if method == 'ECC':
+        # Stack images using ECC method
+        description = "Stacking images using ECC method"
+        print(description)
+        stacked_image = stackImagesECC(file_list)
+
+    elif method == 'ORB':
+        #Stack images using ORB keypoint method
+        description = "Stacking images using ORB method"
+        print(description)
+        stacked_image = stackImagesKeypointMatching(file_list)
+
+    else:
+        print("ERROR: method {} not found!".format(method))
+        exit()
+
+    print("Stacked {0} in {1} seconds".format(len(file_list), (time()-tic) ))
+
+    print("Saved {}".format(args.output_image))
+    cv2.imwrite(str(args.output_image),stacked_image)
+
+    # Show image
+    if args.show is not None:
+        cv2.imshow(description, stacked_image)
+        cv2.waitKey(0)

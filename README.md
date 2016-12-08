@@ -12,18 +12,24 @@ In order to allign the images the perspective transforms between the first image
 The perspective transform can be estimated either using [ORB Keypoint matching](http://docs.opencv.org/3.0-beta/doc/py_tutorials/py_feature2d/py_orb/py_orb.html) (faster) or
 [ECC maximization](http://docs.opencv.org/3.0-beta/modules/video/doc/motion_analysis_and_object_tracking.html#findtransformecc) (more precise).
 
-## Requirements
-- Python 2 or 3
-- OpenCV 3.0
+![alt text](https://github.com/maitek/image_stacking/blob/master/match.jpg "Match keypoints")
+
 
 ## Example Usage
 
-ORB method (faster)
+ORB method (faster):
 ```
-  python image_stacking.py image_folder/ result.jpg --method ORB
+  python image_stacking.py images/ result.jpg --method ORB
 ```
-ECC method (more precise)
-```
-  python image_stacking.py image_folder/ result.jpg --method ECC
-```
+![alt text](https://github.com/maitek/image_stacking/blob/master/result_orb.jpg "ORB result image")
 
+
+ECC method (more precise):
+```
+  python image_stacking.py images/ result.jpg --method ECC
+```
+![alt text](https://github.com/maitek/image_stacking/blob/master/result_ECC.jpg "ECC result image")
+
+## Requirements
+- Python 2 or 3
+- OpenCV 3.0

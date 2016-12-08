@@ -18,14 +18,14 @@ The perspective transform can be estimated either using [ORB Keypoint matching](
 ### ORB method (faster):
 
 ```
-  python image_stacking.py images/ result.jpg --method ORB
+  python auto_stack.py images/ result.jpg --method ORB
 ```
 ![alt text](https://github.com/maitek/image_stacking/blob/master/result_orb.jpg "ORB result image")
 
 
 ### ECC method (more precise):
 ```
-  python image_stacking.py images/ result.jpg --method ECC
+  python auto_stack.py images/ result.jpg --method ECC
 ```
 ![alt text](https://github.com/maitek/image_stacking/blob/master/result_ECC.jpg "ECC result image")
 

@@ -1,12 +1,8 @@
 # Automatic Image Stacking in OpenCV
 
-Image stacking is a technique in digital photograpy where multiple from the same scene are "stacked" together
-in order to reduce image noise caused by a high ISO values. This allows for creating low noise low at low light conditions.
-In order to fuse multiple images together the pixels in all photos needs to aligned with each other,
-which is usually not possible when taking images without a tripod.
-
-This python script shows an example of stack multiple images together by first automatically alligning and then calculating
-a the fused images as a pixel-wise mean of the alligned images. 
+Image stacking is a technique in digital photograpy where multiple photos from the same scene are "stacked" together
+in order to reduce image noise caused by a high ISO values. This allows for creating a low noise image at low light conditions. In order to fuse multiple images together the pixels in all photos needs to aligned with each other,
+which is usually not possible when taking images without a tripod. This python script shows an example of stack multiple images together by first automatically alligning and then calculating a the fused images as a pixel-wise mean of the alligned images. 
 
 In order to allign the images the perspective transforms between the first images and every other images are estimated. 
 The perspective transform can be estimated either using [ORB Keypoint matching](http://docs.opencv.org/3.0-beta/doc/py_tutorials/py_feature2d/py_orb/py_orb.html) (faster) or

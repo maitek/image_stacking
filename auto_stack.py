@@ -105,7 +105,7 @@ if __name__ == '__main__':
 
     file_list = os.listdir(image_folder)
     file_list = [os.path.join(image_folder, x)
-                 for x in file_list if x.endswith(('.jpg', '.png','.bmp'))]
+                 for x in file_list if x.endswith(('.jpg', '.png','.bmp', '.tiff'))]
 
     if args.method is not None:
         method = str(args.method)

@@ -110,7 +110,7 @@ if __name__ == '__main__':
     if args.method is not None:
         method = str(args.method)
     else:
-        method = 'KP'
+        method = 'ORB'
 
     tic = time()
 

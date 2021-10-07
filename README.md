@@ -7,12 +7,12 @@ which is usually not possible when taking images without a tripod. This python s
 
 To see the power of image stacking, check out the before and after images below. Left is a single image taken at in low light, and right is 8 images stacked from the same scene stacked toghether. The more images you have the more the noise can be reduced. 
 
-![alt text](https://github.com/maitek/image_stacking/blob/master/noise_compare.jpg "Noise compare image")
+![alt text](example/noise_compare.jpg "Noise compare image")
 
 In order to allign the images the perspective transforms between the first images and every other images are to be estimated. The perspective transform can be estimated either using [ORB Keypoint matching](http://docs.opencv.org/3.0-beta/doc/py_tutorials/py_feature2d/py_orb/py_orb.html) (faster) or
 [ECC maximization](http://docs.opencv.org/3.0-beta/modules/video/doc/motion_analysis_and_object_tracking.html#findtransformecc) (more precise). 
 
-![alt text](https://github.com/maitek/image_stacking/blob/master/match.jpg "Match keypoints")
+![alt text](example/match.jpg "Match keypoints")
 
 ## Requirements
 - Python 2 or 3
@@ -24,13 +24,13 @@ In order to allign the images the perspective transforms between the first image
 ```
   python auto_stack.py images/ result.jpg --method ORB
 ```
-![alt text](https://github.com/maitek/image_stacking/blob/master/result_orb.jpg "ORB result image")
+![alt text](example/result_orb.jpg "ORB result image")
 
 
 ### ECC method (more precise):
 ```
   python auto_stack.py images/ result.jpg --method ECC
 ```
-![alt text](https://github.com/maitek/image_stacking/blob/master/result_ECC.jpg "ECC result image")
+![alt text](example/result_ECC.jpg "ECC result image")
 
 

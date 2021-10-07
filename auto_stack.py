@@ -1,8 +1,21 @@
+import argparse
 import os
 import cv2
 import numpy as np
 from time import time
+from skimage.exposure import is_low_contrast
 
+
+def loadImages(path, filter_contrast=False):
+    file_list = os.listdir(path)
+    file_list = [os.path.join(path, x)
+                 for x in file_list if x.endswith(('.jpg', '.png', '.bmp', '.tiff'))]
+
+    if filter_contrast:
+        file_list = [
+            x for x in file_list if not is_low_contrast(cv2.imread(x))]
+
+    return file_list
 
 
 # Align and stack images with ECC method
@@ -14,15 +27,16 @@ def stackImagesECC(file_list):
     stacked_image = None
 
     for file in file_list:
-        image = cv2.imread(file,1).astype(np.float32) / 255
+        image = cv2.imread(file, 1).astype(np.float32) / 255
         print(file)
         if first_image is None:
             # convert to gray scale floating point image
-            first_image = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+            first_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             stacked_image = image
         else:
             # Estimate perspective transform
-            s, M = cv2.findTransformECC(cv2.cvtColor(image,cv2.COLOR_BGR2GRAY), first_image, M, cv2.MOTION_HOMOGRAPHY)
+            s, M = cv2.findTransformECC(cv2.cvtColor(
+                image, cv2.COLOR_BGR2GRAY), first_image, M, cv2.MOTION_HOMOGRAPHY)
             w, h, _ = image.shape
             # Align image to first image
             image = cv2.warpPerspective(image, M, (h, w))
@@ -48,7 +62,7 @@ def stackImagesKeypointMatching(file_list):
     first_des = None
     for file in file_list:
         print(file)
-        image = cv2.imread(file,1)
+        image = cv2.imread(file, 1)
         imageF = image.astype(np.float32) / 255
 
         # compute the descriptors with ORB
@@ -65,7 +79,7 @@ def stackImagesKeypointMatching(file_list):
             first_kp = kp
             first_des = des
         else:
-             # Find matches and sort them in the order of their distance
+            # Find matches and sort them in the order of their distance
             matches = matcher.match(first_des, des)
             matches = sorted(matches, key=lambda x: x.distance)
 
@@ -84,9 +98,9 @@ def stackImagesKeypointMatching(file_list):
     stacked_image = (stacked_image*255).astype(np.uint8)
     return stacked_image
 
+
 # ===== MAIN =====
 # Read all files in directory
-import argparse
 
 
 if __name__ == '__main__':
@@ -94,18 +108,20 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('input_dir', help='Input directory of images ()')
     parser.add_argument('output_image', help='Output image name')
-    parser.add_argument('--method', help='Stacking method ORB (faster) or ECC (more precise)')
-    parser.add_argument('--show', help='Show result image',action='store_true')
+    parser.add_argument(
+        '--method', help='Stacking method ORB (faster) or ECC (more precise)')
+    parser.add_argument('--show', help='Show result image',
+                        action='store_true')
+    parser.add_argument('--filter_contrast',
+                        help='Filter low contrast images', action='store_true')
     args = parser.parse_args()
 
     image_folder = args.input_dir
     if not os.path.exists(image_folder):
-        print("ERROR {} not found!".format(image_folder))
+        print(f"ERROR {image_folder} not found!")
         exit()
 
-    file_list = os.listdir(image_folder)
-    file_list = [os.path.join(image_folder, x)
-                 for x in file_list if x.endswith(('.jpg', '.png','.bmp', '.tiff'))]
+    file_list = loadImages(image_folder, args.filter_contrast)
 
     if args.method is not None:
         method = str(args.method)
@@ -121,19 +137,19 @@ if __name__ == '__main__':
         stacked_image = stackImagesECC(file_list)
 
     elif method == 'ORB':
-        #Stack images using ORB keypoint method
+        # Stack images using ORB keypoint method
         description = "Stacking images using ORB method"
         print(description)
         stacked_image = stackImagesKeypointMatching(file_list)
 
     else:
-        print("ERROR: method {} not found!".format(method))
+        print(f"ERROR: method {method} not found!")
         exit()
 
-    print("Stacked {0} in {1} seconds".format(len(file_list), (time()-tic) ))
+    print(f"Stacked {len(file_list)} in {time()-tic} seconds")
 
-    print("Saved {}".format(args.output_image))
-    cv2.imwrite(str(args.output_image),stacked_image)
+    print(f"Saved {args.output_image}")
+    cv2.imwrite(str(args.output_image), stacked_image)
 
     # Show image
     if args.show:

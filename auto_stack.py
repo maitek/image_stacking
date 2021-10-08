@@ -8,12 +8,28 @@ from skimage.exposure import is_low_contrast
 
 def loadImages(path, filter_contrast=False):
     file_list = os.listdir(path)
-    file_list = [os.path.join(path, x)
+    orig_file_list = [os.path.join(path, x)
                  for x in file_list if x.endswith(('.jpg', '.png', '.bmp', '.tiff'))]
 
     if filter_contrast:
         file_list = [
-            x for x in file_list if not is_low_contrast(cv2.imread(x))]
+            x for x in orig_file_list if not is_low_contrast(cv2.imread(x))]
+
+        orig_file_list.sort()
+        file_list.sort()
+
+        exclusion = list(set(orig_file_list) - set(file_list))
+
+        if file_list == orig_file_list:
+            print(f"All images good using all of them")
+        elif len(file_list) < len(orig_file_list) and len(file_list) > 0:
+            print(f"Excluding {exclusion}")
+        else:
+            print(f"Everything is low contrast, attempting to use all images but 0")
+            file_list = orig_file_list
+            file_list.remove(f"{path}/0.dng.tiff")
+    else:
+        file_list = orig_file_list
 
     return file_list
 
@@ -28,7 +44,6 @@ def stackImagesECC(file_list):
 
     for file in file_list:
         image = cv2.imread(file, 1).astype(np.float32) / 255
-        print(file)
         if first_image is None:
             # convert to gray scale floating point image
             first_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -120,6 +135,9 @@ if __name__ == '__main__':
     if not os.path.exists(image_folder):
         print(f"ERROR {image_folder} not found!")
         exit()
+    
+    if image_folder.endswith('/'):
+        image_folder = image_folder[:-1]
 
     file_list = loadImages(image_folder, args.filter_contrast)
 
@@ -146,7 +164,8 @@ if __name__ == '__main__':
         print(f"ERROR: method {method} not found!")
         exit()
 
-    print(f"Stacked {len(file_list)} in {time()-tic} seconds")
+    print(f"Stacked {len(file_list)} images in {time()-tic} seconds")
+    print(file_list)
 
     print(f"Saved {args.output_image}")
     cv2.imwrite(str(args.output_image), stacked_image)

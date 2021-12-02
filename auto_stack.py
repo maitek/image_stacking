@@ -7,35 +7,51 @@ from time import time
 
 # Align and stack images with ECC method
 # Slower but more accurate
-def stackImagesECC(file_list):
+# Uses mean average to stack
+def stackImagesECC(file_list, avg):
     M = np.eye(3, 3, dtype=np.float32)
 
     first_image = None
-    stacked_image = None
+    stacked_image = None if avg == 'mean' else []
 
     for file in file_list:
-        image = cv2.imread(file,1).astype(np.float32) / 255
+        if avg == 'mean':
+            image = cv2.imread(file,1).astype(np.float32) / 255
+        else:
+            image = cv2.imread(file,1)
+
         print(file)
         if first_image is None:
             # convert to gray scale floating point image
             first_image = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
-            stacked_image = image
+            if avg == 'mean':
+                stacked_image = image
+            else:
+                stacked_image.append(image)
         else:
             # Estimate perspective transform
             s, M = cv2.findTransformECC(cv2.cvtColor(image,cv2.COLOR_BGR2GRAY), first_image, M, cv2.MOTION_HOMOGRAPHY)
             w, h, _ = image.shape
             # Align image to first image
             image = cv2.warpPerspective(image, M, (h, w))
-            stacked_image += image
+            if avg == 'mean':
+                stacked_image += image
+            else:
+                stacked_image.append(image)
 
-    stacked_image /= len(file_list)
-    stacked_image = (stacked_image*255).astype(np.uint8)
+    if avg == 'mean':
+        stacked_image /= len(file_list)
+        stacked_image = (stacked_image*255).astype(np.uint8)
+    else:
+        stacked_image = np.stack(stacked_image, axis=2)
+        stacked_image = np.median(stacked_image, axis=2)
+
     return stacked_image
 
 
 # Align and stack images by matching ORB keypoints
 # Faster but less accurate
-def stackImagesKeypointMatching(file_list):
+def stackImagesKeypointMatching(file_list, avg):
 
     orb = cv2.ORB_create()
 
@@ -84,17 +100,35 @@ def stackImagesKeypointMatching(file_list):
     stacked_image = (stacked_image*255).astype(np.uint8)
     return stacked_image
 
+
+# Stack images with median averaging; no transform
+def stackImagesMedian(file_list):
+    first_image = None
+    stacked_images = []
+
+    for file in file_list:
+        image = cv2.imread(file,1)
+        print(file)
+        stacked_images.append(image)
+
+    stacked_images = np.stack(stacked_images, axis=2)
+    stacked_image = np.median(stacked_images, axis=2)
+    return stacked_image
+
+
 # ===== MAIN =====
 # Read all files in directory
 import argparse
 
 
 if __name__ == '__main__':
+    avgs = ['mean', 'median']
 
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('input_dir', help='Input directory of images ()')
     parser.add_argument('output_image', help='Output image name')
-    parser.add_argument('--method', help='Stacking method ORB (faster) or ECC (more precise)')
+    parser.add_argument('--method', help='Stacking method ORB (faster), ECC (more precise) or MEDIAN (no transform)')
+    parser.add_argument('--avg', help='Averaging method mean or median')
     parser.add_argument('--show', help='Show result image',action='store_true')
     args = parser.parse_args()
 
@@ -112,19 +146,34 @@ if __name__ == '__main__':
     else:
         method = 'KP'
 
+    if args.avg is not None:
+        avg = str(args.avg)
+    else:
+        avg = 'mean'
+
+    if avg not in avgs:
+        print(f'ERROR: avg {avg} not found!')
+        exit()
+
     tic = time()
 
     if method == 'ECC':
         # Stack images using ECC method
-        description = "Stacking images using ECC method"
+        description = f'Stacking images using ECC method with {avg} averaging'
         print(description)
-        stacked_image = stackImagesECC(file_list)
+        stacked_image = stackImagesECC(file_list, avg)
 
     elif method == 'ORB':
         #Stack images using ORB keypoint method
-        description = "Stacking images using ORB method"
+        description = f'Stacking images using ORB method with {avg} averaging'
         print(description)
-        stacked_image = stackImagesKeypointMatching(file_list)
+        stacked_image = stackImagesKeypointMatching(file_list, avg)
+
+    elif method == 'MEDIAN':
+        #Stack images using median only, no perspective transformation
+        description = "Stacking images using MEDIAN method"
+        print(description)
+        stacked_image = stackImagesMedian(file_list)
 
     else:
         print("ERROR: method {} not found!".format(method))
